@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sheldon X</title>
+    <!-- Add Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container mt-5">
+    <ul class="nav nav-tabs" id="myTabs">
+        <li class="nav-item">
+            <a class="nav-link active" data-toggle="tab" href="#manifest">Manifest</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" data-toggle="tab" href="#details">Details</a>
+        </li>
+        <!-- Add other tab links here -->
+    </ul>
+
+    <div class="tab-content">
+        <div id="manifest" class="tab-pane fade show active">
+            <div class="mb-3"></div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <select class="custom-select btn-block" id="direction-select">
+                        <option value="Work forward">Work forward</option>
+                        <option value="Work back">Work back</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <input type="date" class="form-control" id="anchor-date" value="Anchor Date">
+                </div>
+                <div class="col-md-4 mb-3 text-md-right">
+                    <button class="btn btn-primary" id="add-row">Add Row</button>
+                    <button class="btn btn-success ml-2" id="generate-button">Generate</button>
+                </div>
+            </div>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>Description</th>
+                    <th>Provider</th>
+                    <th>Duration</th>
+                    <th>Needs</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody id="table-body">
+                <tr id="goal-row">
+                    <td>GOAL</td>
+                    <td>The end of the project</td>
+                    <td></td>
+                    <td></td>
+                    <td contenteditable="true">Add needs</td>
+                    <td></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- Add other tab content sections here -->
+</div>
+</div>
+
+<!-- Add Bootstrap JS and jQuery -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<!-- Include your JavaScript code in an external file or inline script -->
+
+<script>
+    // Function to execute when 'Manifest' tab is shown
+    function executeManifestTabScript() {
+        document.addEventListener("DOMContentLoaded", function() {
+            const addRowButton = document.getElementById("add-row");
+            const generateButton = document.getElementById("generate-button");
+            const directionSelect = document.getElementById("direction-select");
+            const anchorDateInput = document.getElementById("anchor-date");
+            const tableBody = document.getElementById("table-body");
+            let rowCount = 1;
+
+            addRowButton.addEventListener("click", function() {
+                console.log("Add Row clicked");
+                const newRow = `
+                        <tr>
+                            <td contenteditable="true">Deliverable ${rowCount}</td>
+                            <td contenteditable="true"></td>
+                            <td contenteditable="true"></td>
+                            <td contenteditable="true"></td>
+                            <td contenteditable="true"></td>
+                            <td><button class="btn btn-danger btn-sm delete-row">Delete</button></td>
+                        </tr>
+                    `;
+                tableBody.insertAdjacentHTML("beforeend", newRow);
+                rowCount++;
+            });
+
+            tableBody.addEventListener("click", function(event) {
+                if (event.target.classList.contains("delete-row")) {
+                    const row = event.target.closest("tr");
+                    row.remove();
+                }
+            });
+
+            generateButton.addEventListener("click", function() {
+                const selectedDirection = directionSelect.value;
+                const selectedDate = anchorDateInput.value;
+                console.log("Selected Direction:", selectedDirection);
+                console.log("Selected Date:", selectedDate);
+
+                const tableRows = tableBody.querySelectorAll("tr");
+                tableRows.forEach(row => {
+                    const cells = row.querySelectorAll("td");
+                    const rowData = Array.from(cells).map(cell => cell.textContent);
+                    console.log("Row Data:", rowData);
+                });
+            });
+        });
+    }
+
+    // Call the function when 'Manifest' tab is shown
+    $('#myTabs a[href="#manifest"]').on('shown.bs.tab', function (e) {
+        executeManifestTabScript();
+    });
+</script>
+
+</body>
+</html>
