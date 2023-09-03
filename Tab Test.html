@@ -36,44 +36,43 @@
     <div class="tab-content">
         <div id="manifest" class="tab-pane fade show active">
             <div class="mb-3"></div>
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <select class="custom-select btn-block" id="direction-select">
-                        <option value="Work forward">Work forward</option>
-                        <option value="Work back">Work back</option>
-                    </select>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <select class="custom-select btn-block" id="direction-select">
+                            <option value="Work forward">Work forward</option>
+                            <option value="Work back">Work back</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <input type="date" class="form-control" id="anchor-date" value="Anchor Date">
+                    </div>
+                    <div class="col-md-4 mb-3 text-md-right">
+                        <button class="btn btn-primary" id="add-row-btn">Add Row</button>
+                        <button class="btn btn-success ml-2" id="generate-button-btn">Generate</button>
+                    </div>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <input type="date" class="form-control" id="anchor-date" value="Anchor Date">
-                </div>
-                <div class="col-md-4 mb-3 text-md-right">
-                    <button class="btn btn-primary" id="add-row-btn">Add Row</button>
-                    <button class="btn btn-success ml-2" id="generate-button-btn">Generate</button>
-                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Product Name</th>
+                            <th>Description</th>
+                            <th>Provider</th>
+                            <th>Duration</th>
+                            <th>Needs</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="manifestTableBody">
+                        <tr id="goal-row">
+                            <td>GOAL</td>
+                            <td>The end of the project</td>
+                            <td></td>
+                            <td></td>
+                            <td contenteditable="true">Add needs</td>
+                            <td></td>
+                        </tr>
+                </table>
             </div>
-            <table class="table">
-                <thead>
-                <tr>
-                    <th>Product Name</th>
-                    <th>Description</th>
-                    <th>Provider</th>
-                    <th>Duration</th>
-                    <th>Needs</th>
-                    <th>Action</th>
-                </tr>
-                </thead>
-                <tbody id="table-body">
-                <tr id="goal-row">
-                    <td>GOAL</td>
-                    <td>The end of the project</td>
-                    <td></td>
-                    <td></td>
-                    <td contenteditable="true">Add needs</td>
-                    <td></td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
 
         <div id="details" class="tab-pane fade">
             <div class="container mt-4">
@@ -89,7 +88,7 @@
                         <th>Latest Finish</th>
                     </tr>
                     </thead>
-                    <tbody id="manifestTableBody"></tbody>
+                    <tbody id="detailsTableBody"></tbody>
                 </table>
             </div>
 
@@ -146,17 +145,122 @@
 
 <script>
 
+    function openNeo4jGraph () {
+        // Initialize the neo4j credentials and the driver
+        console.log('Selected the Details tab');
+
+        const uri = "neo4j+s://e79438c2.databases.neo4j.io";  // Replace with your server's URI
+        const user = "neo4j";         // Replace with your username
+        const password = "jJFWoUeQVGXPVnb9e7wJ4k4r4S1xdjFjwLXL_fmHuT4";     // Replace with your password
+
+        // Create a Neo4j driver instance
+        window.neo4jDriver = neo4j.driver(uri, neo4j.auth.basic(user, password));
+    }
+
     // JavaScript for the 'Manifest' tab
     function runManifestTabScript() {
         console.log('JavaScript for the Manifest tab is running.');
 
         console.log('Selected the Manifest tab');
 
+        openNeo4jGraph();
+
+        // Initialize the Manifest from the graph
+        const query = (
+            "MATCH (p:Product) " +
+            "OPTIONAL MATCH (p)-[:PROVIDED_BY]->(pr:Provider) " +
+            "WITH p, pr " +
+            "OPTIONAL MATCH (p)-[:NEEDS]->(neededProduct:Product) " +
+            "RETURN p.name AS ProductName, " +
+                   "pr.name AS ProviderName, " +
+                   "p.duration AS ProductDuration, " +
+                   "COLLECT(neededProduct.name) AS NeededProductNames " +
+            "ORDER BY ProductName;"
+        )
+
+        // Run the query
+        const session = neo4jDriver.session();
+        session.run(query)
+            .then(result => {
+                const manifestTableBody = document.getElementById("manifestTableBody");
+
+                // Remove the previous rows
+
+                // Check if the table body exists
+                if (manifestTableBody) {
+                    // Remove all child rows from the table body
+                    while (manifestTableBody.firstChild) {
+                        manifestTableBody.removeChild(manifestTableBody.firstChild);
+                    }
+                } else {
+                    console.error("Table body with ID 'manifestTableBody' not found.");
+                }
+
+                // Loop through each record in the result
+                result.records.forEach(record => {
+                    const productName = record.get("ProductName");
+                    const providerName = record.get("ProviderName");
+                    const productDuration = record.get("ProductDuration");
+                    const needs = record.get("NeededProductNames");
+
+                    // Create a table row and cells for each record
+                    const row = document.createElement("tr");
+                    const productCell = document.createElement("td");
+                    const descriptionCell = document.createElement("td");
+                    const providerCell = document.createElement("td");
+                    const durationCell = document.createElement("td");
+                    const needsCell = document.createElement("td");
+
+                    productCell.textContent = productName;
+                    productCell.setAttribute("contenteditable", "true");
+
+                    descriptionCell.textContent = '';
+                    descriptionCell.setAttribute("contenteditable", "true");
+
+                    providerCell.textContent = providerName;
+                    providerCell.setAttribute("contenteditable", "true");
+
+                    durationCell.textContent = productDuration;
+                    durationCell.setAttribute("contenteditable", "true");
+
+                    needsCell.textContent = '';
+                    needsCell.setAttribute("contenteditable", "true");
+
+                    row.appendChild(productCell);
+                    row.appendChild(descriptionCell);
+                    row.appendChild(providerCell);
+                    row.appendChild(durationCell);
+                    row.appendChild(needsCell);
+
+                    // Create a 'td' element
+                    var tdElementForDelete = document.createElement("td");
+                    var deleteRowButton = document.createElement("button");
+                    deleteRowButton.className = "btn btn-danger btn-sm delete-row";
+                    deleteRowButton.textContent = "Delete";
+
+                    tdElementForDelete.appendChild(deleteRowButton);
+
+                    row.appendChild(tdElementForDelete);
+
+                    manifestTableBody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error("Error executing query:", error);
+            })
+            .finally(() => {
+                session.close();
+                neo4jDriver.close();
+            });
+
+
+        // Set up the buttons and fields
+
         const addRowButton = document.getElementById("add-row");
         const generateButton = document.getElementById("generate-button-btn");
         const directionSelect = document.getElementById("direction-select");
         const anchorDateInput = document.getElementById("anchor-date");
-        const tableBody = document.getElementById("table-body");
+        const manifestTableBody = document.getElementById("manifestTableBody");
         let rowCount = 1;
 
         // Add Row button click handler for the Manifest tab
@@ -173,12 +277,12 @@
                 <td><button class="btn btn-danger btn-sm delete-row">Delete</button></td>
               </tr>
             `;
-            tableBody.insertAdjacentHTML("beforeend", newRow);
+            manifestTableBody.insertAdjacentHTML("beforeend", newRow);
             rowCount++;
 
         });
 
-        tableBody.addEventListener("click", function(event) {
+        manifestTableBody.addEventListener("click", function(event) {
             if (event.target.classList.contains("delete-row")) {
                 const row = event.target.closest("tr");
                 row.remove();
@@ -191,7 +295,7 @@
             console.log("Selected Direction:", selectedDirection);
             console.log("Selected Date:", selectedDate);
 
-            const tableRows = tableBody.querySelectorAll("tr");
+            const tableRows = manifestTableBody.querySelectorAll("tr");
             tableRows.forEach(row => {
                 const cells = row.querySelectorAll("td");
                 const rowData = Array.from(cells).map(cell => cell.textContent);
@@ -207,21 +311,10 @@
 
     });
 
-    // $('#generate-button-btn').on('click', function () {
-    //     console.log('Generate clicked');
-    // });
-
-
     // JavaScript for the 'Details' tab
     $('#details-tab').on('shown.bs.tab', function () {
-        console.log('Selected the Details tab');
 
-        const uri = "neo4j+s://e79438c2.databases.neo4j.io";  // Replace with your server's URI
-        const user = "neo4j";         // Replace with your username
-        const password = "jJFWoUeQVGXPVnb9e7wJ4k4r4S1xdjFjwLXL_fmHuT4";     // Replace with your password
-
-        // Create a Neo4j driver instance
-        const driver = neo4j.driver(uri, neo4j.auth.basic(user, password));
+        openNeo4jGraph();
 
         // Example query to retrieve 'Product' nodes and their 'name' and 'duration' properties
         const query = (
@@ -239,21 +332,21 @@
         );
 
         // Run the query
-        const session = driver.session();
+        const session = neo4jDriver.session();
         session.run(query)
             .then(result => {
-                const manifestTableBody = document.getElementById("manifestTableBody");
+                const detailsTableBody = document.getElementById("detailsTableBody");
 
                 // Remove the previous rows
 
                 // Check if the table body exists
-                if (manifestTableBody) {
+                if (detailsTableBody) {
                     // Remove all child rows from the table body
-                    while (manifestTableBody.firstChild) {
-                        manifestTableBody.removeChild(manifestTableBody.firstChild);
+                    while (detailsTableBody.firstChild) {
+                        detailsTableBody.removeChild(detailsTableBody.firstChild);
                     }
                 } else {
-                    console.error("Table body with ID 'manifestTableBody' not found.");
+                    console.error("Table body with ID 'detailsTableBody' not found.");
                 }
 
                 // Loop through each record in the result
@@ -292,7 +385,7 @@
                     row.appendChild(earliestFinishCell);
                     row.appendChild(latestFinishCell);
 
-                    manifestTableBody.appendChild(row);
+                    detailsTableBody.appendChild(row);
                 });
             })
             .catch(error => {
@@ -300,7 +393,7 @@
             })
             .finally(() => {
                 session.close();
-                driver.close();
+                neo4jDriver.close();
             });
 
         console.log('Completed the Details tab');
