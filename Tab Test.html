@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiple Bootstrap Tabs</title>
+    <!-- Add Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container mt-5">
+    <ul class="nav nav-tabs" id="myTabs">
+        <li class="nav-item">
+            <a class="nav-link active" data-toggle="tab" href="#manifest" id="manifest-tab">Manifest</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" href="#details" id="details-tab">Details</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" href="#paths" id="paths-tab">Paths</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" href="#independentNodes" id="independentNodes-tab">PC -- Independent Nodes</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" href="#orphanedProducts" id="orphanedProducts-tab">PC -- Orphaned Products</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" href="#ganttChart" id="ganttChart-tab">Gantt Chart</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-toggle="tab" href="#providers" id="providers-tab">Providers</a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+
+        <div id="manifest" class="tab-pane fade show active">
+            <h2>Manifest Tab Content</h2>
+            <button id="add-row-btn" class="btn btn-primary">Add Row</button>
+        </div>
+
+        <div id="details" class="tab-pane fade">
+            <div class="container mt-4">
+                <table class="table mt-3">
+                    <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Provider Name</th>
+                        <th>Product Duration</th>
+                        <th>Earliest Start</th>
+                        <th>Latest Start</th>
+                        <th>Earliest Finish</th>
+                        <th>Latest Finish</th>
+                    </tr>
+                    </thead>
+                    <tbody id="manifestTableBody"></tbody>
+                </table>
+            </div>
+
+        </div>
+
+        <div id="paths" class="tab-pane fade">
+            <h2>Paths Tab Content</h2>
+        </div>
+
+        <div id="independentNodes" class="tab-pane fade">
+            <h2>PC -- Independent Nodes Tab Content</h2>
+        </div>
+
+        <div id="orphanedProducts" class="tab-pane fade">
+            <h2>PC -- Orphaned Products Tab Content</h2>
+        </div>
+
+        <div id="ganttChart" class="tab-pane fade">
+            <h2>Gantt Chart Tab Content</h2>
+        </div>
+
+        <div id="providers" class="tab-pane fade">
+            <h2>Providers Tab Content</h2>
+        </div>
+
+    </div>
+</div>
+
+<!-- Add Bootstrap JS and jQuery -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://unpkg.com/neo4j-driver"></script>
+
+<script>
+    $('#myTabs a').on('click', function (e) {
+        e.preventDefault();
+        $(this).tab('show');
+        const selectedTab = $(this).text();
+        console.log(`Selected Tab: ${selectedTab}`);
+    });
+
+    // Add Row button click handler
+    $('#add-row-btn').on('click', function () {
+        console.log('Add Row clicked');
+    });
+
+    // Javascript executed when tab is selecte
+
+    // JavaScript for the 'Manifest' tab
+    $('#manifest-tab').on('shown.bs.tab', function () {
+        console.log('Selected the Details tab');
+    });
+
+    // JavaScript for the 'Details' tab
+    $('#details-tab').on('shown.bs.tab', function () {
+        console.log('Selected the Details tab');
+
+        const uri = "neo4j+s://e79438c2.databases.neo4j.io";  // Replace with your server's URI
+        const user = "neo4j";         // Replace with your username
+        const password = "jJFWoUeQVGXPVnb9e7wJ4k4r4S1xdjFjwLXL_fmHuT4";     // Replace with your password
+
+        // Create a Neo4j driver instance
+        const driver = neo4j.driver(uri, neo4j.auth.basic(user, password));
+
+        // Example query to retrieve 'Product' nodes and their 'name' and 'duration' properties
+        const query = (
+            "MATCH (product:Product) " +
+            "MATCH (product)-[:LIVES_IN]->(timeEnvelope:TimeEnvelope) " +
+            "MATCH (product)-[:PROVIDED_BY]->(provider:Provider) " +
+            "RETURN product.name AS productName, " +
+            "product.duration AS productDuration, " +
+            "timeEnvelope.earliest_start AS earliest_start, " +
+            "timeEnvelope.earliest_finish AS earliest_finish, " +
+            "timeEnvelope.latest_start AS latest_start, " +
+            "timeEnvelope.latest_finish AS latest_finish, " +
+            "provider.name AS providerName " +
+            "ORDER BY productName"
+        );
+
+        // Run the query
+        const session = driver.session();
+        session.run(query)
+            .then(result => {
+                const manifestTableBody = document.getElementById("manifestTableBody");
+
+                // Remove the previous rows
+
+                // Check if the table body exists
+                if (manifestTableBody) {
+                    // Remove all child rows from the table body
+                    while (manifestTableBody.firstChild) {
+                        manifestTableBody.removeChild(manifestTableBody.firstChild);
+                    }
+                } else {
+                    console.error("Table body with ID 'manifestTableBody' not found.");
+                }
+
+                // Loop through each record in the result
+                result.records.forEach(record => {
+                    const productName = record.get("productName");
+                    const providerName = record.get("providerName");
+                    const productDuration = record.get("productDuration");
+                    const earliestStart = record.get("earliest_start");
+                    const latestStart = record.get("latest_start");
+                    const earliestFinish = record.get("earliest_finish");
+                    const latestFinish = record.get("latest_finish");
+
+                    // Create a table row and cells for each record
+                    const row = document.createElement("tr");
+                    const productCell = document.createElement("td");
+                    const providerCell = document.createElement("td");
+                    const durationCell = document.createElement("td");
+                    const earliestStartCell = document.createElement("td");
+                    const latestStartCell = document.createElement("td");
+                    const earliestFinishCell = document.createElement("td");
+                    const latestFinishCell = document.createElement("td");
+
+                    productCell.textContent = productName;
+                    providerCell.textContent = providerName;
+                    durationCell.textContent = productDuration;
+                    earliestStartCell.textContent = earliestStart;
+                    latestStartCell.textContent = latestStart;
+                    earliestFinishCell.textContent = earliestFinish;
+                    latestFinishCell.textContent = latestFinish;
+
+                    row.appendChild(productCell);
+                    row.appendChild(providerCell);
+                    row.appendChild(durationCell);
+                    row.appendChild(earliestStartCell);
+                    row.appendChild(latestStartCell);
+                    row.appendChild(earliestFinishCell);
+                    row.appendChild(latestFinishCell);
+
+                    manifestTableBody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error("Error executing query:", error);
+            })
+            .finally(() => {
+                session.close();
+                driver.close();
+            });
+
+        console.log('Completed the Details tab');
+
+    });
+
+    // JavaScript for the 'Paths' tab
+    $('#paths-tab').on('shown.bs.tab', function () {
+        console.log('Selected the Paths tab');
+    });
+
+    // JavaScript for the 'PC -- Independent Nodes' tab
+    $('#independentNodes-tab').on('shown.bs.tab', function () {
+        console.log('Selected the Independent Nodes tab');
+    });
+
+    // JavaScript for the 'PC -- Orphaned Products' tab
+    $('#orphanedProducts-tab').on('shown.bs.tab', function () {
+        console.log('Selected the Orphaned Products tab');
+    });
+
+    // JavaScript for the 'PC -- Independent Nodes' tab
+    $('#ganttChart-tab').on('shown.bs.tab', function () {
+        console.log('Selected the Gantt Chart tab');
+    });
+
+    // JavaScript for the 'PC -- Independent Nodes' tab
+    $('#providers-tab').on('shown.bs.tab', function () {
+        console.log('Selected the Providers tab');
+    });
+
+
+</script>
+</body>
+</html>
