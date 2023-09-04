@@ -264,25 +264,37 @@
         let rowCount = 1;
 
         // Add Row button click handler for the Manifest tab
-        $('#add-row-btn').on('click', function () {
-            console.log('Add Row clicked');
+        document.addEventListener("DOMContentLoaded", function () {
+            const manifestTableBody = document.getElementById("manifestTableBody");
+            const addRowButton = document.getElementById("add-row-btn");
 
-            const newRow = `
-              <tr>
-                <td contenteditable="true">Deliverable ${rowCount}</td>
-                <td contenteditable="true"></td>
-                <td contenteditable="true"></td>
-                <td contenteditable="true"></td>
-                <td contenteditable="true"></td>
-                <td><button class="btn btn-danger btn-sm delete-row">Delete</button></td>
-              </tr>
-            `;
-            manifestTableBody.insertAdjacentHTML("beforeend", newRow);
-            rowCount++;
+            let rowCount = 1; // Track the number of rows
 
+            // Function to add a new row
+
+            function addRow() {
+                console.log('Add Row clicked');
+
+                const newRow = document.createElement("tr");
+                newRow.innerHTML = `
+                    <td contenteditable="true">Deliverable ${rowCount}</td>
+                    <td contenteditable="true"></td>
+                    <td contenteditable="true"></td>
+                    <td contenteditable="true"></td>
+                    <td contenteditable="true"></td>
+                    <td><button class="btn btn-danger btn-sm delete-row">Delete</button></td>
+                `;
+                manifestTableBody.insertAdjacentHTML("beforeend", newRow);
+                rowCount++;
+            }
+
+            // Add click event listener to the "Add Row" button
+            addRowButton.addEventListener("click", addRow);
         });
 
         manifestTableBody.addEventListener("click", function(event) {
+            console.log('Delete Row clicked');
+
             if (event.target.classList.contains("delete-row")) {
                 const row = event.target.closest("tr");
                 row.remove();
