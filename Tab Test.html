@@ -130,6 +130,13 @@
 
         console.log(`Page loaded`);
 
+        const addRowButton = document.getElementById("add-row");
+        const generateButton = document.getElementById("generate-button-btn");
+        const directionSelect = document.getElementById("direction-select");
+        const anchorDateInput = document.getElementById("anchor-date");
+        const tableBody = document.getElementById("table-body");
+        let rowCount = 1;
+
         // Initialize the tab component
         $('#myTabs a').on('click', function(e) {
             e.preventDefault();
@@ -137,27 +144,6 @@
             const selectedTab = $(this).text();
             console.log(`Selected Tab: ${selectedTab}`);
         });
-
-        // Run the JavaScript for the 'Manifest' tab on page load
-        runManifestTabScript();
-    });
-
-</script>
-
-<script>
-
-    // JavaScript for the 'Manifest' tab
-    function runManifestTabScript() {
-        console.log('JavaScript for the Manifest tab is running.');
-
-        console.log('Selected the Manifest tab');
-
-        const addRowButton = document.getElementById("add-row");
-        const generateButton = document.getElementById("generate-button-btn");
-        const directionSelect = document.getElementById("direction-select");
-        const anchorDateInput = document.getElementById("anchor-date");
-        const tableBody = document.getElementById("table-body");
-        let rowCount = 1;
 
         // Add Row button click handler for the Manifest tab
         $('#add-row-btn').on('click', function () {
@@ -178,13 +164,6 @@
 
         });
 
-        tableBody.addEventListener("click", function(event) {
-            if (event.target.classList.contains("delete-row")) {
-                const row = event.target.closest("tr");
-                row.remove();
-            }
-        });
-
         generateButton.addEventListener("click", function() {
             const selectedDirection = directionSelect.value;
             const selectedDate = anchorDateInput.value;
@@ -197,6 +176,29 @@
                 const rowData = Array.from(cells).map(cell => cell.textContent);
                 console.log("Row Data:", rowData);
             });
+        });
+
+        // Run the JavaScript for the 'Manifest' tab on page load
+        runManifestTabScript();
+    });
+
+</script>
+
+<script>
+
+    // JavaScript for the 'Manifest' tab
+    function runManifestTabScript() {
+        console.log('JavaScript for the Manifest tab is running.');
+
+        console.log('Selected the Manifest tab');
+
+       const tableBody = document.getElementById("table-body");
+
+        tableBody.addEventListener("click", function(event) {
+            if (event.target.classList.contains("delete-row")) {
+                const row = event.target.closest("tr");
+                row.remove();
+            }
         });
 
     }
